@@ -5,7 +5,7 @@ library(readxl)
 
 # Main dataframe
 
-FAS <- read_dta("FAS.dta")
+FAS <- read_dta("Raw_Data/FAS_cl.dta")
 
 
 # Mobile subscriptions
@@ -13,7 +13,7 @@ FAS <- read_dta("FAS.dta")
 mobile_sub <- read_excel("Raw_Data/API_IT.CEL.SETS.P2_DS2_en_excel_v2_2163817.xls")
 
 mobile_sub <- mobile_sub %>%
-  pivot_longer("2004":"2019", names_to = "year", values_to = "mobile_sub")
+  pivot_longer("2004":"2019", names_to = "year", values_to = "mobile_sub", names_transform = list(year = as.numeric))
 
 
 # ICT import 
@@ -22,7 +22,7 @@ ict_import <- read_excel("Raw_Data/API_TM.VAL.ICTG.ZS.UN_DS2_en_excel_v2_2178789
                          skip = 3)
 
 ict_import <- ict_import %>%
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "ict_import") %>%
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "ict_import", names_transform = list(year = as.numeric)) %>%
   select(-c(`1960`:`2003`,`2020`))
 
 
@@ -32,7 +32,7 @@ internet_users <- read_excel("Raw_Data/API_IT.NET.USER.ZS_DS2_en_excel_v2_216344
 skip = 3)
 
 internet_users <- internet_users %>%
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "internet_users") %>%
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "internet_users", names_transform = list(year = as.numeric)) %>%
   select(-c(`1960`:`2003`,`2020`))
 
 
@@ -42,7 +42,7 @@ fix_tel <- read_excel("Raw_Data/API_IT.MLT.MAIN_DS2_en_excel_v2_2164245.xls",
                       skip = 3)
 
 fix_tel <- fix_tel %>%
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "fix_tel") %>%
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "fix_tel", names_transform = list(year = as.numeric)) %>%
   select(-c(`1960`:`2003`,`2020`))
 
 
@@ -52,7 +52,7 @@ gdp_capita_g <- read_csv("Raw_Data/GDPCapitaGrowth.csv",
                          skip = 3)
 
 gdp_capita_g <- gdp_capita_g %>%
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "gdp_capita_g") %>%
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "gdp_capita_g", names_transform = list(year = as.numeric)) %>%
   select(-c(`1960`:`2003`,`2020`, `X66`))
 
 
@@ -68,15 +68,15 @@ female_labor <- female_labor %>%
 colnames(female_labor) = c(colnames(female_labor[1:4]), "2004":"2019")
 
 female_labor_part_rate = female_labor %>% slice_head(n = 263) %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_labor_part_rate")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_labor_part_rate", names_transform = list(year = as.numeric))
 
 female_labor_pct_total = female_labor %>%
   filter(`Series Code` == "SL.TLF.TOTL.FE.ZS")    %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_labor_pct_total")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_labor_pct_total", names_transform = list(year = as.numeric))
 
 female_male_ratio = female_labor %>%
   filter(`Series Code` == "SL.TLF.CACT.FM.ZS")    %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_male_ratio")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_male_ratio", names_transform = list(year = as.numeric))
 
 
 # WGI
@@ -87,23 +87,33 @@ WGI <- WGI %>% mutate(across(.cols = -c(`Series Name`, `Series Code`, `Country N
 
 wgi_corruption <- WGI %>%
   filter(`Series Name` == "Control of Corruption: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "corruption")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "corruption", names_transform = list(year = as.numeric))
 
 wgi_effectiveness <- WGI %>%
   filter(`Series Name` == "Government Effectiveness: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "effectiveness")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "effectiveness", names_transform = list(year = as.numeric))
 
 wgi_regulatory <- WGI %>%
   filter(`Series Name` == "Regulatory Quality: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "regulatory")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "regulatory", names_transform = list(year = as.numeric))
 
 wgi_ruleoflaw <- WGI %>%
   filter(`Series Name` == "Rule of Law: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "ruleoflaw")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "ruleoflaw", names_transform = list(year = as.numeric))
 
 wgi_accountability <- WGI %>%
   filter(`Series Name` == "Voice and Accountability: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "accountability")
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "accountability", names_transform = list(year = as.numeric))
+
+
+# Inflation (consumer prices)
+
+inflation <- read_csv("Raw_Data/InflationRate.csv", 
+                      skip = 3)
+
+inflation <- inflation %>%
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "inflation", names_transform = list(year = as.numeric)) %>%
+  select(-c(`1960`:`2003`,`2020`,`X66`))
 
 
 
@@ -117,3 +127,25 @@ wgi_accountability <- WGI %>%
 
 
 
+# Merge (beta)
+
+rm(df)
+
+df <- left_join(FAS, inflation, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, wgi_ruleoflaw, by = c("iso3" = "Country Code", "year" = "year"))
+
+# Toy models
+
+library(plm)
+library(labelled)
+
+df = pdata.frame(remove_labels(df), index = c("iso3","year"))
+
+model <- plm(i_borrowers_A1_pop ~ ruleoflaw + inflation, model = "within", data = df)
+summary(model)
+
+
+
+
+?pdata.frame
