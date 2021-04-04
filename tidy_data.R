@@ -115,7 +115,7 @@ inflation <- inflation %>%
   pivot_longer(`2004`:`2019`, names_to = "year", values_to = "inflation", names_transform = list(year = as.numeric)) %>%
   select(-c(`1960`:`2003`,`2020`,`X66`))
 
-
+# Doing Business
 
 
 
@@ -148,4 +148,4 @@ summary(model)
 
 
 
-?pdata.frame
+
