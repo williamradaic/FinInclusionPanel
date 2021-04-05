@@ -117,9 +117,25 @@ inflation <- inflation %>%
 
 # Doing Business
 
+dbusiness <- read_excel("Raw_Data/DB_WB.xlsx", 
+                        sheet = "Sheet1")
+
+dbusiness <- dbusiness %>%
+  filter((`DB Year` != 2020)) %>%
+  rename("year" = `DB Year`) %>%
+  mutate(across(.cols = -c(Region, Economy, `Income group`, `Country code`), .fns = as.numeric))
 
 
+# Heritage (fixed)
 
+heritage <- read_excel("Raw_Data/Heritage_fixed.xlsx", 
+                       na = "N/A")
+
+heritage <- heritage %>%
+  rename("year" = "Index Year") %>%
+  filter(year > 2003) %>%
+  filter(year < 2020) %>%
+  mutate(across(.cols = -c(`Name`), .fns = as.numeric))
 
 
 
@@ -133,18 +149,58 @@ rm(df)
 
 df <- left_join(FAS, inflation, by = c("iso3" = "Country Code", "year" = "year"))
 
+df <- left_join(df, dbusiness, by = c("iso3" = "Country code", "year" = "year"))
+
+df <- left_join(df, female_labor_part_rate, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, female_labor_pct_total, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, female_male_ratio, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, fix_tel, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, gdp_capita_g, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, ict_import, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, internet_users, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, mobile_sub, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, wgi_accountability, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, wgi_corruption, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, wgi_effectiveness, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- left_join(df, wgi_regulatory, by = c("iso3" = "Country Code", "year" = "year"))
+
 df <- left_join(df, wgi_ruleoflaw, by = c("iso3" = "Country Code", "year" = "year"))
+
+df <- inner_join(df, heritage, by = c("Country Name.x" = "Name", "year" = "year"))
+
+
 
 # Toy models
 
 library(plm)
 library(labelled)
+library(stargazer)
 
 df = pdata.frame(remove_labels(df), index = c("iso3","year"))
 
-model <- plm(i_borrowers_A1_pop ~ ruleoflaw + inflation, model = "within", data = df)
-summary(model)
+model1 <- plm(i_borrowers_A1_pop ~ Property.Rights + Cost....of.claim. + female_labor_pct_total + fix_tel + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = df, na.action = na.omit)
+summary(model1)
 
+stargazer(model1, type = 'text')
+
+
+
+gmm_model <- plm(i_borrowers_A1_pop ~ Property.Rights + Cost....of.claim. + female_labor_pct_total + fix_tel + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = df, na.action = na.omit)
+summary(gmm_model)
+stargazer(gmm_model, type = 'text')
+
+df$Score.Cost....of.claim.
 
 
 
