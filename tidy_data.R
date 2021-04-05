@@ -3,12 +3,12 @@ library(tidyverse)
 library(dplyr)
 library(readxl)
 
-# Main dataframe
+# FAS #############
 
 FAS <- read_dta("Raw_Data/FAS_cl.dta")
 
 
-# Mobile subscriptions
+# Mobile subscriptions #############
 
 mobile_sub <- read_excel("Raw_Data/API_IT.CEL.SETS.P2_DS2_en_excel_v2_2163817.xls")
 
@@ -16,7 +16,7 @@ mobile_sub <- mobile_sub %>%
   pivot_longer("2004":"2019", names_to = "year", values_to = "mobile_sub", names_transform = list(year = as.numeric))
 
 
-# ICT import 
+# ICT import #############
 
 ict_import <- read_excel("Raw_Data/API_TM.VAL.ICTG.ZS.UN_DS2_en_excel_v2_2178789.xls", 
                          skip = 3)
@@ -26,7 +26,7 @@ ict_import <- ict_import %>%
   select(-c(`1960`:`2003`,`2020`))
 
 
-# Internet users
+# Internet users #############
 
 internet_users <- read_excel("Raw_Data/API_IT.NET.USER.ZS_DS2_en_excel_v2_2163445.xls", 
 skip = 3)
@@ -36,7 +36,7 @@ internet_users <- internet_users %>%
   select(-c(`1960`:`2003`,`2020`))
 
 
-# Fixed tel subscriptions
+# Fixed tel subscriptions #############
 
 fix_tel <- read_excel("Raw_Data/API_IT.MLT.MAIN_DS2_en_excel_v2_2164245.xls", 
                       skip = 3)
@@ -46,7 +46,7 @@ fix_tel <- fix_tel %>%
   select(-c(`1960`:`2003`,`2020`))
 
 
-# GDP per capita growth
+# GDP per capita growth #############
 
 gdp_capita_g <- read_csv("Raw_Data/GDPCapitaGrowth.csv", 
                          skip = 3)
@@ -56,7 +56,7 @@ gdp_capita_g <- gdp_capita_g %>%
   select(-c(`1960`:`2003`,`2020`, `X66`))
 
 
-# Female labor force share
+# Female labor force share #############
 
 female_labor <- read_csv("Raw_Data/a0f8708e-c025-40a1-bc37-80be5d565b34_Data.csv")
 
@@ -79,7 +79,7 @@ female_male_ratio = female_labor %>%
   pivot_longer(`2004`:`2019`, names_to = "year", values_to = "female_male_ratio", names_transform = list(year = as.numeric))
 
 
-# WGI
+# WGI #############
 
 WGI <- read_excel("Raw_Data/WGI_wb.xlsx")
 
@@ -87,26 +87,26 @@ WGI <- WGI %>% mutate(across(.cols = -c(`Series Name`, `Series Code`, `Country N
 
 wgi_corruption <- WGI %>%
   filter(`Series Name` == "Control of Corruption: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "corruption", names_transform = list(year = as.numeric))
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_corruption", names_transform = list(year = as.numeric))
 
 wgi_effectiveness <- WGI %>%
   filter(`Series Name` == "Government Effectiveness: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "effectiveness", names_transform = list(year = as.numeric))
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_effectiveness", names_transform = list(year = as.numeric))
 
 wgi_regulatory <- WGI %>%
   filter(`Series Name` == "Regulatory Quality: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "regulatory", names_transform = list(year = as.numeric))
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_regulatory", names_transform = list(year = as.numeric))
 
 wgi_ruleoflaw <- WGI %>%
   filter(`Series Name` == "Rule of Law: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "ruleoflaw", names_transform = list(year = as.numeric))
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_ruleoflaw", names_transform = list(year = as.numeric))
 
 wgi_accountability <- WGI %>%
   filter(`Series Name` == "Voice and Accountability: Estimate") %>% 
-  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "accountability", names_transform = list(year = as.numeric))
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_accountability", names_transform = list(year = as.numeric))
 
 
-# Inflation (consumer prices)
+# Inflation (consumer prices) #############
 
 inflation <- read_csv("Raw_Data/InflationRate.csv", 
                       skip = 3)
@@ -115,7 +115,7 @@ inflation <- inflation %>%
   pivot_longer(`2004`:`2019`, names_to = "year", values_to = "inflation", names_transform = list(year = as.numeric)) %>%
   select(-c(`1960`:`2003`,`2020`,`X66`))
 
-# Doing Business
+# Doing Business #############
 
 dbusiness <- read_excel("Raw_Data/DB_WB.xlsx", 
                         sheet = "Sheet1")
@@ -126,7 +126,7 @@ dbusiness <- dbusiness %>%
   mutate(across(.cols = -c(Region, Economy, `Income group`, `Country code`), .fns = as.numeric))
 
 
-# Heritage (fixed)
+# Heritage (fixed) #############
 
 heritage <- read_excel("Raw_Data/Heritage_fixed.xlsx", 
                        na = "N/A")
@@ -138,18 +138,17 @@ heritage <- heritage %>%
   mutate(across(.cols = -c(`Name`), .fns = as.numeric))
 
 
+# Polity V #############
+
+polity_v <- read_excel("Raw_Data/polity_v.xls")
 
 
 
+# Merge (beta) #############
 
-
-# Merge (beta)
-
-rm(df)
+# rm(df)
 
 df <- left_join(FAS, inflation, by = c("iso3" = "Country Code", "year" = "year"))
-
-df <- left_join(df, dbusiness, by = c("iso3" = "Country code", "year" = "year"))
 
 df <- left_join(df, female_labor_part_rate, by = c("iso3" = "Country Code", "year" = "year"))
 
@@ -165,7 +164,9 @@ df <- left_join(df, ict_import, by = c("iso3" = "Country Code", "year" = "year")
 
 df <- left_join(df, internet_users, by = c("iso3" = "Country Code", "year" = "year"))
 
-df <- left_join(df, mobile_sub, by = c("iso3" = "Country Code", "year" = "year"))
+## inner join para excluir divisão de regiões como rows da df
+df <- inner_join(df, mobile_sub, by = c("iso3" = "Country Code", "year" = "year"))
+##
 
 df <- left_join(df, wgi_accountability, by = c("iso3" = "Country Code", "year" = "year"))
 
@@ -177,11 +178,51 @@ df <- left_join(df, wgi_regulatory, by = c("iso3" = "Country Code", "year" = "ye
 
 df <- left_join(df, wgi_ruleoflaw, by = c("iso3" = "Country Code", "year" = "year"))
 
-df <- inner_join(df, heritage, by = c("Country Name.x" = "Name", "year" = "year"))
+df <- left_join(df, dbusiness, by = c("iso3" = "Country code", "year" = "year"))
+
+df <- left_join(df, heritage, by = c("Country Name.x" = "Name", "year" = "year"))
+
+df <- left_join(df, polity_v, by = c("iso3" = "scode", "year" = "year"))
+
+
+## Clean df variables #############
+
+df_clean <- df %>% 
+  select(-c(i_mob_agent_active_pop, i_mob_agent_active_km2,  i_mob_agent_registered_pop, i_mob_agent_registered_km2, i_depositors_A1_sme_perNFC, i_depositors_A1_hhs_pop, contains("hhs"), contains("sme"), contains("_M"), contains("_F"), contains(".x"), contains(".y"))) %>%
+  select(-c(Economy, `country`, `p5`))
+
+df_clean2 <- df_clean %>% 
+  mutate(.before = i_branches_A1_km2, i_branches_sum_km2 = (i_branches_A1_km2 %>% replace_na(0) + i_branches_A2_km2 %>% replace_na(0) + i_branches_A3B1a_km2 %>% replace_na(0) + i_branches_A4_km2 %>% replace_na(0) + i_nonbranch_A1_km2 %>% replace_na(0)) %>% na_if(0)) %>% # Adicionei nonbranch (correspondentes bancários). Acho que pode ser relevante para países específicos, e tá razoavelmente análogo à essa variável aqui.
+  mutate(.before = i_branches_A1_pop, i_branches_sum_pop = (i_branches_A1_pop %>% replace_na(0) + i_branches_A2_pop %>% replace_na(0) + i_branches_A3B1a_pop %>% replace_na(0) + i_branches_A4_pop %>% replace_na(0)  + i_nonbranch_A1_pop %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_depositors_A1_pop, i_depositors_sum_pop = (i_depositors_A1_pop %>% replace_na(0) + i_depositors_A2_pop %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_deposit_acc_A1_pop, i_deposit_acc_sum_pop = (i_deposit_acc_A1_pop %>% replace_na(0) + i_deposit_acc_A2_pop %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_borrowers_A1_pop, i_borrowers_sum_pop = (i_borrowers_A1_pop %>% replace_na(0) + i_borrowers_A2_pop %>% replace_na(0) + i_borrowers_A3B1a_pop %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_loan_acc_A1_pop, i_loan_acc_sum_pop = (i_loan_acc_A1_pop %>% replace_na(0) + i_loan_acc_A2_pop %>% replace_na(0) + i_loan_acc_A3B1a_pop %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_deposits_A1_GDP, i_deposits_sum_GDP = (i_deposits_A1_GDP %>% replace_na(0) + i_deposits_A2_GDP %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_loans_A1_GDP, i_loans_sum_GDP = (i_loans_A1_GDP %>% replace_na(0) + i_loans_A2_GDP %>% replace_na(0) + i_loans_A3B1a_GDP %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_cards_credit_pop, i_cards_sum_pop = (i_cards_credit_pop %>% replace_na(0) + i_cards_debit_pop %>% replace_na(0)) %>% na_if(0)) %>%
+  mutate(.before = i_policies_B2_life_pop, i_policies_B2_sum_pop = (i_policies_B2_life_pop %>% replace_na(0) + i_policies_B2_nonlife_pop %>% replace_na(0)) %>% na_if(0)) 
+  
+  
+df_clean3 <- df_clean2 %>%
+  select(-c(contains("A2"), contains("A3"), contains("A3B1a"), contains("A4"), i_nonbranch_A1_km2, i_nonbranch_A1_pop)) %>%
+  relocate(c(Region, `Income group`), .before = i_branches_sum_km2) %>%
+  relocate(c(iso3, year)) %>%
+  select(-c(DB_score_1720, DB_score_15, DB_score_1014, getting_credit_1520, getting_credit_0514, score_enforcing_1720, score_enforcing_0415))
 
 
 
-# Toy models
+
+#library(foreign)
+
+#write.dta(df, file = "df_1.dta")
+
+#library(haven)
+
+write_dta(df_clean3, "df_clean3.dta", version = 14)
+
+
+# Toy models #############
 
 library(plm)
 library(labelled)
@@ -200,7 +241,6 @@ gmm_model <- plm(i_borrowers_A1_pop ~ Property.Rights + Cost....of.claim. + fema
 summary(gmm_model)
 stargazer(gmm_model, type = 'text')
 
-df$Score.Cost....of.claim.
 
 
 
