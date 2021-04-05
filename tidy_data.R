@@ -219,7 +219,7 @@ df_clean3 <- df_clean2 %>%
 
 #library(haven)
 
-write_dta(df_clean3, "df_clean3.dta", version = 14)
+write_dta(df_clean3 %>% janitor::clean_names(), "df_clean3.dta", version = 14)
 
 
 # Toy models #############
