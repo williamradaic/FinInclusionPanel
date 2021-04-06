@@ -188,7 +188,7 @@ df <- left_join(df, polity_v, by = c("iso3" = "scode", "year" = "year"))
 ## Clean df variables #############
 
 df_clean <- df %>% 
-  select(-c(i_mob_agent_active_pop, i_mob_agent_active_km2,  i_mob_agent_registered_pop, i_mob_agent_registered_km2, i_depositors_A1_sme_perNFC, i_depositors_A1_hhs_pop, contains("hhs"), contains("sme"), contains("_M"), contains("_F"), contains(".x"), contains(".y"))) %>%
+  select(-c(i_mob_agent_active_pop, i_mob_agent_active_km2,  i_mob_agent_registered_pop, i_mob_agent_registered_km2, i_depositors_A1_sme_perNFC, i_depositors_A1_hhs_pop, contains("hhs"), contains("sme"), (contains("_M") & contains("i_")), (contains("_F") & contains("i_")), contains(".x"), contains(".y"))) %>%
   select(-c(Economy, `country`, `p5`))
 
 df_clean2 <- df_clean %>% 
@@ -291,14 +291,14 @@ dfteste = pdata.frame(remove_labels(dfteste), index = c("iso3","year"))
 make.pbalanced(dfteste, "shared.individuals")
 is.pconsecutive(df)
 
-model1 <- plm(i_borrowers_A1_pop ~ wgi_ruleoflaw + female_labor_pct_total + fix_tel + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = dfteste, na.action = na.omit)
-summary(model1)
+model1 <- plm(i_borrowers_A1_pop ~ wgi_ruleoflaw + female_labor_pct_total + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = df, na.action = na.omit)
+summary(model1, vcov = vcovHC(model1, method = "arellano"))
 
 stargazer(model1, type = 'text')
 
 
 
-gmm_model <- plm(i_borrowers_A1_pop ~ Property.Rights + Cost....of.claim. + female_labor_pct_total + fix_tel + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = df, na.action = na.omit)
+gmm_model <- pgmm(i_borrowers_A1_pop ~ wgi_ruleoflaw + female_labor_pct_total + gdp_capita_g + ict_import + internet_users + mobile_sub | lag(i_borrowers_A1_pop,1), data = df, na.action = na.omit)
 summary(gmm_model)
 stargazer(gmm_model, type = 'text')
 
