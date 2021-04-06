@@ -212,6 +212,59 @@ df_clean3 <- df_clean2 %>%
 
 
 
+# PCA for financial inclusion #############
+
+pca_1 <- princomp(df_clean3 %>% select(c(i_depositors_sum_pop, i_borrowers_sum_pop)) %>% drop_na(), cor = T)
+
+pca_1 <- prcomp(df_clean3 %>% select(c(i_depositors_sum_pop, i_borrowers_sum_pop)) %>% drop_na(), scale = T)
+
+plot(pca_1)
+
+library(factoextra)
+fviz_eig(pca_1)
+
+d_acct = ((na.omit(df_clean3$i_deposit_acc_sum_pop)) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T) / max(df_clean3$i_deposit_acc_sum_pop, na.rm = T) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T))
+
+
+df_clean3 <- df_clean3 %>%
+  mutate(d_acc = (i_deposit_acc_sum_pop - min(i_deposit_acc_sum_pop) / max(df_clean3$i_deposit_acc_sum_pop) - min(df_clean3$i_deposit_acc_sum_pop)))
+
+for (i in (1:nrow(df_clean3))) {
+  df_clean3$d_acc[i] = ((df_clean3$i_deposit_acc_sum_pop[i] - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T)) / (max(df_clean3$i_deposit_acc_sum_pop, na.rm = T) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T)))
+}
+
+summary(df_clean3$d_acc)
+
+d_branches = matrix(NA, nrow = nrow(df_clean3))
+
+df_clean3 = cbind(df_clean3, d_branches)
+
+for (i in (1:nrow(df_clean3))) {
+  df_clean3$d_branches[i] = ((df_clean3$i_branches_sum_pop[i] - min(df_clean3$i_branches_sum_pop, na.rm = T)) / (max(df_clean3$i_branches_sum_pop, na.rm = T) - min(df_clean3$i_branches_sum_pop, na.rm = T)))
+}
+
+summary(df_clean3$d_branches)
+
+
+d_atm = matrix(NA, nrow = nrow(df_clean3))
+
+df_clean3 = cbind(df_clean3, d_atm)
+
+for (i in (1:nrow(df_clean3))) {
+  df_clean3$d_atm[i] = ((df_clean3$i_ATMs_pop[i] - min(df_clean3$i_ATMs_pop, na.rm = T)) / (max(df_clean3$i_ATMs_pop, na.rm = T) - min(df_clean3$i_ATMs_pop, na.rm = T)))
+}
+
+summary(df_clean3$d_atm)
+
+
+
+
+
+
+
+
+
+
 
 #library(foreign)
 
@@ -228,9 +281,17 @@ library(plm)
 library(labelled)
 library(stargazer)
 
-df = pdata.frame(remove_labels(df), index = c("iso3","year"))
+df = pdata.frame(remove_labels(df_clean3), index = c("iso3","year"))
 
-model1 <- plm(i_borrowers_A1_pop ~ Property.Rights + Cost....of.claim. + female_labor_pct_total + fix_tel + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = df, na.action = na.omit)
+dfteste <- df_clean3 %>%
+  select(c(i_borrowers_A1_pop,iso3, year, wgi_ruleoflaw, female_labor_pct_total, fix_tel, gdp_capita_g, ict_import, internet_users, mobile_sub))
+
+dfteste = pdata.frame(remove_labels(dfteste), index = c("iso3","year"))
+
+make.pbalanced(dfteste, "shared.individuals")
+is.pconsecutive(df)
+
+model1 <- plm(i_borrowers_A1_pop ~ wgi_ruleoflaw + female_labor_pct_total + fix_tel + gdp_capita_g + ict_import + internet_users + mobile_sub, model = "within", data = dfteste, na.action = na.omit)
 summary(model1)
 
 stargazer(model1, type = 'text')
