@@ -105,6 +105,13 @@ wgi_accountability <- WGI %>%
   filter(`Series Name` == "Voice and Accountability: Estimate") %>% 
   pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_accountability", names_transform = list(year = as.numeric))
 
+wgi_stability <- WGI %>%
+  filter(`Series Name` == "Political Stability and Absence of Violence/Terrorism: Estimate") %>% 
+  pivot_longer(`2004`:`2019`, names_to = "year", values_to = "wgi_stability", names_transform = list(year = as.numeric)) %>%
+  rename(iso3 = `Country Code`)
+
+write_dta(wgi_stability %>% janitor::clean_names(), "wgi_stability.dta")
+
 
 # Inflation (consumer prices) #############
 
@@ -141,6 +148,19 @@ heritage <- heritage %>%
 # Polity V #############
 
 polity_v <- read_excel("Raw_Data/polity_v.xls")
+
+
+# Primary ed #############
+
+primary_ed <- read_excel("Raw_Data/primary_ed.xlsx")
+
+primary_ed <- primary_ed %>%
+  #filter(`Series Name` == "Voice and Accountability: Estimate") %>% 
+  pivot_longer(5:20, names_to = "year", values_to = "primary_ed_pct", names_transform = list(year = as.numeric)) 
+
+primary_ed %>%
+  select(everything()) %>%  
+  summarise_all(funs(sum(is.na(.)))) %>% transpose()
 
 
 
@@ -184,6 +204,8 @@ df <- left_join(df, heritage, by = c("Country Name.x" = "Name", "year" = "year")
 
 df <- left_join(df, polity_v, by = c("iso3" = "scode", "year" = "year"))
 
+df <- left_join(df, gdp_pc, by = c("iso3" = "iso3", "year" = "year"))
+
 
 ## Clean df variables #############
 
@@ -223,11 +245,13 @@ plot(pca_1)
 library(factoextra)
 fviz_eig(pca_1)
 
-d_acct = ((na.omit(df_clean3$i_deposit_acc_sum_pop)) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T) / max(df_clean3$i_deposit_acc_sum_pop, na.rm = T) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T))
+# Financial Inclusion Index ###############
+
+# d_acct = ((na.omit(df_clean3$i_deposit_acc_sum_pop)) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T) / max(df_clean3$i_deposit_acc_sum_pop, na.rm = T) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T))
 
 
 df_clean3 <- df_clean3 %>%
-  mutate(d_acc = (i_deposit_acc_sum_pop - min(i_deposit_acc_sum_pop) / max(df_clean3$i_deposit_acc_sum_pop) - min(df_clean3$i_deposit_acc_sum_pop)))
+   mutate(d_acc = (i_deposit_acc_sum_pop - min(i_deposit_acc_sum_pop) / max(df_clean3$i_deposit_acc_sum_pop) - min(df_clean3$i_deposit_acc_sum_pop)))
 
 for (i in (1:nrow(df_clean3))) {
   df_clean3$d_acc[i] = ((df_clean3$i_deposit_acc_sum_pop[i] - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T)) / (max(df_clean3$i_deposit_acc_sum_pop, na.rm = T) - min(df_clean3$i_deposit_acc_sum_pop, na.rm = T)))
@@ -256,15 +280,63 @@ for (i in (1:nrow(df_clean3))) {
 
 summary(df_clean3$d_atm)
 
+### GDP per capita #########
+
+gdp_pc <- read_excel("Raw_Data/gdp_pc.xlsx")
+
+gdp_pc <- gdp_pc %>%
+  #filter(`Series Name` == "Voice and Accountability: Estimate") %>% 
+  pivot_longer(5:20, names_to = "year", values_to = "gdp_percap", names_transform = list(year = as.numeric, gdp_percap = as.numeric)) %>% mutate(across(.cols = gdp_percap, .fns = as.numeric))
+
+write_dta(gdp_pc %>% janitor::clean_names(), "gdp_pc.dta")
+
+
+# Merge to final df ################
+
+dfn <- read_csv("dfn.csv")
+
+df_clean4 = cbind(df_clean3, dfn %>%
+  select(c(BankCon5:wgi_gov)))
+
+
+df_clean4 = tibble(df_clean4) 
+
+df_clean4 <- df_clean4 %>% 
+  select(-c(contains(".data")))
+
+
+
+dfin = df_clean4
+
+write_dta(dfin %>% janitor::clean_names(), "dfin.dta", version = 14)
+
+dfn <- read_csv("dfn (1).csv")
 
 
 
 
+######## fix stata dta #####################
 
+dfin <- read_dta("dfin.dta")
 
+dfin <- left_join(dfin, gdp_pc, by = c("iso3", "year"))
 
+dfin <- dfin %>% mutate(across(.cols = gdp_percap, .fns = as.numeric)) %>% select(-c(90:92))
 
+write_dta(dfin %>% janitor::clean_names(), "dfin2.dta")
 
+library(foreign)
+write.dta(dfin %>% janitor::clean_names(), "dfin2.dta")
+
+write_sav(dfin, "dfin2.sav")
+
+gdp_percap = dfin$gdp_percap
+
+dfin$gdp_percap = gdp_percap
+
+dfin2 <- read_sav("dfin2.sav")
+
+write_dta(data = dfin2, "Raw_Data/dfin2.dta")
 
 #library(foreign)
 
@@ -304,5 +376,6 @@ stargazer(gmm_model, type = 'text')
 
 
 
-
+fixed_effect <- plm(IFIS ~ gdp_capita_g + monetary_freedom + wgi_ruleoflaw + score_cost_pct_claim + mobile_sub + ict_import + internet_users + Education, data = dfin, model = "within")
+summary(fixed_effect, vcov = vcovHC(fixed_effect, method = "arellano"))
 
